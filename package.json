@@ -1,0 +1,25 @@
+{
+  "name": "signoff",
+  "version": "1.0.2",
+  "description": "Signoff will validate and ensure your email inputs are rigorously RFC compliant without the excess.",
+  "main": "signoff.js",
+  "files": [
+    "package.json",
+    "signoff.js",
+    "signoff.test.js",
+    "readme.md"
+  ],
+  "scripts": {
+    "test": "node signoff.test.js",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "email",
+    "validator",
+    "validation",
+    "verification",
+    "syntax"
+  ],
+  "author": "David H.",
+  "license": "MIT"
+}

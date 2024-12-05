@@ -1,0 +1,43 @@
+const structure = /^[^@]+@[^@]+\.[^@]+$/ //Regex to check if a string starts with one or more characters that are not an @ followed by an @, followed by one or more characters that are not an @ followed by a period and finally ending in one or more characters that are not an @ which, for the sake of practical validation, simplifies the structure defined by the RFC 5322 specification
+
+const handle = /^(?:[\p{L}\p{N}_+=&](?:[\p{L}\p{N}_+=&]|(?:\.(?!\.)))*[\p{L}\p{N}_+=&]|[\p{L}\p{N}_+=&])$/u; //According to the RFC 5321 specification, a regex defined to check if a string contains only valid characters including equals and ampersand for use in the handle of an email, and to ensure that it doesn't have contiguous periods or a period at the beginning, and that it ends with a letter, number, underscore, plus sign, equals sign, or ampersand according to the RFC 5321 specification
+
+const domain = /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/ //According to the RFC 1035 specification, a regex defined to check if a string contains only valid characters for use in the domain of an email and inherently doesn't have contiguous periods, doesn't have contiguous hyphens and doesn't start or end with a hyphen
+
+const ipV4DomainLiteral = /^\[((25[0-5]|2[0-4][0-9]|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4][0-9]|1\d{2}|[1-9]?\d)\]$/ //According to section 4.1.2 of the RFC 5321 specification, a regex defined to check if a string is a valid IPv4 domain literal address
+
+const ipV6DomainLiteral = /^\[(IPv6:)?[0-9a-fA-F:]+\]$/ //According to the RFC 4291 specification, a regex defined to check if a string is a valid IPv6 domain literal address
+
+const quotedString = /^"([\s\S]+)"$/ //According to the RFC 5322 specification, a regex defined to check if any quoted strings, though rare in email addresses, are valid
+
+
+module.exports = email => { //signoff.js takes one argument, an email address, and returns a boolean indicating whether or not its format is valid...
+
+    if (typeof email !== 'string') { return false } //...according to RFC 5321 and before anything check to make sure what ended up being passed to the procedure was actually a string...
+
+    email = email.trim() //...remove any whitespace that might have ended up in it...
+
+    if (email.length > 254) { return false } //...according to the RFC 5321 specification for maximum allowed email length, check if the string is longer than 254 characters...
+
+    const [handlePortion, domainPortion] = [email.slice(0, email.lastIndexOf('@')), email.slice(email.lastIndexOf('@') + 1)] //...split the email address into two portions, the handle portion and the domain portion, at the last occurrence of the @ symbol...
+
+    if ((domainPortion.startsWith('[') && domainPortion.endsWith(']')) || (handlePortion.startsWith('"') && handlePortion.endsWith('"'))) { //...if the domain of the email is a domain literal, permitted under the RFC 1035 specification, or if the handle of the email is a quoted string, permitted under the RFC 5322 specification...
+
+        if (domainPortion.startsWith('[') && domainPortion.endsWith(']')) { //...if the former...
+
+            if (!ipV4DomainLiteral.test(domainPortion) && !ipV6DomainLiteral.test(domainPortion)) { //...if it's not a valid IPv4 or IPv6 domain literal...
+                return false //...return false...
+            }
+        }
+
+        if (handlePortion.startsWith('"') && handlePortion.endsWith('"')) { //...and if the latter...
+
+            if (!quotedString.test(handlePortion)) { //...if it's not a valid quoted string...
+                return false //...return false...
+            }
+        }
+
+    } else if (!structure.test(email) || !handle.test(handlePortion) || !domain.test(domainPortion)) { return false } //...otherwise if the email address doesn't pass the structure regex, or the handle doesn't pass the handle regex, or the domain doesn't pass the domain regex, return false...
+
+    return true //...otherwise return true
+}
